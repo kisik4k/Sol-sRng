@@ -1,4 +1,4 @@
--- ПРОСТОЙ ESP ДЛЯ SOL'S RNG
+-- ESP С ТЕКСТОМ ВОЗЛЕ ИГРОКОВ
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -48,7 +48,7 @@ local function CreateButton(text, position, callback)
     return Button
 end
 
--- ФУНКЦИЯ ESP
+-- ФУНКЦИЯ ESP ВОЗЛЕ ИГРОКОВ
 local function CreateESP(player)
     if player == LocalPlayer then return end
     
@@ -60,22 +60,32 @@ local function CreateESP(player)
     
     if not humanoid or not head then return end
     
-    -- Создаем BillBoardGui для ESP
+    -- Создаем BillBoardGui для ESP (ВОЗЛЕ ИГРОКА)
     local espFolder = Instance.new("Folder")
     espFolder.Name = player.Name .. "_ESP"
     espFolder.Parent = ScreenGui
     
+    -- BillBoardGui который следует за головой
+    local billboard = Instance.new("BillboardGui")
+    billboard.Size = UDim2.new(0, 200, 0, 80)
+    billboard.AlwaysOnTop = true
+    billboard.Enabled = ESPEnabled
+    billboard.Adornee = head
+    billboard.SizeOffset = Vector2.new(0, 2.5) -- НАД ГОЛОВОЙ
+    billboard.Parent = espFolder
+    
     -- Фон для текста
     local background = Instance.new("Frame")
-    background.Size = UDim2.new(0, 200, 0, 60)
+    background.Size = UDim2.new(1, 0, 1, 0)
     background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     background.BackgroundTransparency = 0.3
-    background.BorderSizePixel = 0
-    background.Parent = espFolder
+    background.BorderSizePixel = 1
+    background.BorderColor3 = Color3.fromRGB(255, 255, 255)
+    background.Parent = billboard
     
     -- Имя игрока
     local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(1, 0, 0, 20)
+    nameLabel.Size = UDim2.new(1, 0, 0.33, 0)
     nameLabel.Position = UDim2.new(0, 0, 0, 0)
     nameLabel.BackgroundTransparency = 1
     nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -86,8 +96,8 @@ local function CreateESP(player)
     
     -- Здоровье
     local healthLabel = Instance.new("TextLabel")
-    healthLabel.Size = UDim2.new(1, 0, 0, 20)
-    healthLabel.Position = UDim2.new(0, 0, 0, 20)
+    healthLabel.Size = UDim2.new(1, 0, 0.33, 0)
+    healthLabel.Position = UDim2.new(0, 0, 0.33, 0)
     healthLabel.BackgroundTransparency = 1
     healthLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
     healthLabel.Text = "HP: " .. math.floor(humanoid.Health)
@@ -97,23 +107,14 @@ local function CreateESP(player)
     
     -- Дистанция
     local distanceLabel = Instance.new("TextLabel")
-    distanceLabel.Size = UDim2.new(1, 0, 0, 20)
-    distanceLabel.Position = UDim2.new(0, 0, 0, 40)
+    distanceLabel.Size = UDim2.new(1, 0, 0.33, 0)
+    distanceLabel.Position = UDim2.new(0, 0, 0.66, 0)
     distanceLabel.BackgroundTransparency = 1
     distanceLabel.TextColor3 = Color3.fromRGB(50, 255, 50)
-    distanceLabel.Text = "Дистанция: 0m"
+    distanceLabel.Text = "0m"
     distanceLabel.Font = Enum.Font.Gotham
     distanceLabel.TextSize = 11
     distanceLabel.Parent = background
-    
-    -- Привязываем к голове игрока
-    local billboard = Instance.new("BillboardGui")
-    billboard.Size = UDim2.new(0, 200, 0, 60)
-    billboard.AlwaysOnTop = true
-    billboard.Enabled = ESPEnabled
-    billboard.Adornee = head
-    billboard.Parent = background
-    billboard.SizeOffset = Vector2.new(0, 2)
     
     ESPFolders[player] = espFolder
     
@@ -135,15 +136,15 @@ local function CreateESP(player)
         local distance = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")) 
             and (head.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude 
             or 0
-        distanceLabel.Text = "Дистанция: " .. math.floor(distance) .. "m"
+        distanceLabel.Text = math.floor(distance) .. "m"
         
-        -- Меняем цвет в зависимости от расстояния
+        -- Меняем цвет фона в зависимости от расстояния
         if distance < 10 then
-            background.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+            background.BorderColor3 = Color3.fromRGB(255, 0, 0) -- Красный - близко
         elseif distance < 20 then
-            background.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
+            background.BorderColor3 = Color3.fromRGB(255, 165, 0) -- Оранжевый - среднее
         else
-            background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            background.BorderColor3 = Color3.fromRGB(0, 255, 0) -- Зеленый - далеко
         end
         
         -- Показываем/скрываем ESP
@@ -180,13 +181,17 @@ local yPos = 40
 -- КНОПКА ESP
 CreateButton("ESP: " .. tostring(ESPEnabled), UDim2.new(0.05, 0, 0, yPos), function()
     ToggleESP()
-    MainFrame:Destroy() -- Закрываем меню после нажатия
 end)
 yPos = yPos + 35
 
--- КНОПКА ЗАКРЫТИЯ
+-- КНОПКА ЗАКРЫТИЯ МЕНЮ
 CreateButton("Закрыть меню", UDim2.new(0.05, 0, 0, yPos), function()
-    ScreenGui:Destroy()
+    MainFrame.Visible = false
+end)
+
+-- КНОПКА ОТКРЫТИЯ МЕНЮ
+CreateButton("Открыть меню", UDim2.new(0.05, 0, 0, yPos + 35), function()
+    MainFrame.Visible = true
 end)
 
 -- ПЕРЕКЛЮЧЕНИЕ МЕНЮ НА F9
